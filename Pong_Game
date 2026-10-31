@@ -1,0 +1,86 @@
+import pygame as pg
+import time
+# initalize pygame
+pg.init()
+pg.font.init()
+# set the screen for pygame
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
+screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+# The pygame fps
+clock = pg.time.Clock()
+# If the game is running or not
+running = True
+# draws paddles
+block_1 = pg.Rect(0, 200, 20, 100) # puts the block on the left side of the screen
+block_2 = pg.Rect(1260, 200, 20, 100)
+# ball variables
+ball_radius = 10
+LEFT_SCORE = 0
+RIGHT_SCORE = 0
+# Create a proper rect tracking object for the ball, centered on screen
+ball_rect = pg.Rect(SCREEN_WIDTH // 2 - ball_radius, SCREEN_HEIGHT // 2 - ball_radius, ball_radius * 2, ball_radius * 2)
+velocity = pg.math.Vector2(250, 200)
+# seconds since last frame delta time (dt)
+dt = 0
+
+while running:
+    for event in pg.event.get():
+        if event.type == pg.QUIT:
+            running = False
+    # screen colour
+    screen.fill("black")
+    
+    # render game
+    pg.draw.circle(screen, "white", ball_rect.center, ball_radius)
+    pg.draw.rect(screen, "white", block_1)
+    pg.draw.rect(screen, "white", block_2)
+    my_font = pg.font.Font(None, 80)
+    text_surface = my_font.render(f"{LEFT_SCORE} : {RIGHT_SCORE}", False, "white")
+    screen.blit(text_surface, (585, 50))
+    # paddle controls
+    keys = pg.key.get_pressed()
+    # paddle one
+    if keys[pg.K_w]:
+        block_1.y -= 600 * dt
+    if keys[pg.K_s]:
+        block_1.y += 600 * dt
+    # paddle 2
+    if keys[pg.K_i]:
+        block_2.y -= 600 * dt
+    if keys[pg.K_k]:
+        block_2.y += 600 * dt
+    # ball physics
+    ball_rect.x += velocity.x * dt
+    ball_rect.y += velocity.y * dt
+    # ball barrier
+    if ball_rect.top <=0 or ball_rect.bottom >= SCREEN_HEIGHT:
+        velocity.y *= -1
+        velocity.y += 1
+    # resetting the ball if the paddles miss 
+    if ball_rect.left <= 0:
+        ball_rect.x = SCREEN_WIDTH // 2 - ball_radius
+        ball_rect.y = SCREEN_HEIGHT // 2 - ball_radius
+        velocity = pg.math.Vector2(250, 200)
+        RIGHT_SCORE += 1 
+        
+    if ball_rect.right >= SCREEN_WIDTH:
+        ball_rect.x = SCREEN_WIDTH // 2 - ball_radius
+        ball_rect.y = SCREEN_HEIGHT // 2 - ball_radius
+        velocity = pg.math.Vector2(-250, 200) 
+        LEFT_SCORE += 1 
+    # paddle 1 collide with ball
+    if block_1.colliderect(ball_rect):
+        velocity.x *= -1
+        velocity.x *= 1.5
+    # paddle 2 with ball
+    if block_2.colliderect(ball_rect):
+        velocity.x *= -1
+        velocity.x *= 1.5
+    # flip() the display to put your work on screen
+    pg.display.flip()
+    
+    # fps limit
+    dt = clock.tick(120) / 1000
+
+pg.quit()
